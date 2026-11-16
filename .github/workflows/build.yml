@@ -1,0 +1,35 @@
+name: Build IPA
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pod install
+        working-directory: src
+        run: pod install
+
+      - name: Build
+        working-directory: src
+        run: |
+          xcodebuild \
+            -workspace "Parcel - Tracking.xcworkspace" \
+            -scheme "Parcel - Tracking" \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package IPA
+        working-directory: src
+        run: |
+          mkdir Payload
+          cp -R build/Build/Products/Release-iphoneos/*.app Payload/
+          zip -r -y Parcel_Tracking.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Parcel_Tracking-ipa
+          path: src/Parcel_Tracking.ipa
